@@ -17,11 +17,13 @@
 		A100001B0000000000000001 /* ScreenshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001A0000000000000001 /* ScreenshotStore.swift */; };
 		A100001D0000000000000001 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001C0000000000000001 /* SettingsViewModel.swift */; };
 		A100001F0000000000000001 /* ScreenshotCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001E0000000000000001 /* ScreenshotCardView.swift */; };
+		A10000330000000000000001 /* MultiFileDragButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000320000000000000001 /* MultiFileDragButton.swift */; };
 		A10000210000000000000001 /* SectionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000200000000000000001 /* SectionHeaderView.swift */; };
 		A10000230000000000000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000220000000000000001 /* SettingsView.swift */; };
 		A10000250000000000000001 /* ShelfView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000240000000000000001 /* ShelfView.swift */; };
 		A10000270000000000000001 /* PreviewSampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000260000000000000001 /* PreviewSampleData.swift */; };
 		A10000310000000000000001 /* ScreenshotLocationResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000300000000000000001 /* ScreenshotLocationResolver.swift */; };
+		A10000350000000000000001 /* QuickLookPreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000340000000000000001 /* QuickLookPreviewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,12 +38,14 @@
 		A100001A0000000000000001 /* ScreenshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotStore.swift; sourceTree = "<group>"; };
 		A100001C0000000000000001 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		A100001E0000000000000001 /* ScreenshotCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCardView.swift; sourceTree = "<group>"; };
+		A10000320000000000000001 /* MultiFileDragButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiFileDragButton.swift; sourceTree = "<group>"; };
 		A10000200000000000000001 /* SectionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionHeaderView.swift; sourceTree = "<group>"; };
 		A10000220000000000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A10000240000000000000001 /* ShelfView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfView.swift; sourceTree = "<group>"; };
 		A10000260000000000000001 /* PreviewSampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSampleData.swift; sourceTree = "<group>"; };
 		A100002F0000000000000001 /* SnapShelf.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SnapShelf.entitlements; sourceTree = "<group>"; };
 		A10000300000000000000001 /* ScreenshotLocationResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotLocationResolver.swift; sourceTree = "<group>"; };
+		A10000340000000000000001 /* QuickLookPreviewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreviewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +147,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000260000000000000001 /* PreviewSampleData.swift */,
+				A10000340000000000000001 /* QuickLookPreviewController.swift */,
 				A10000300000000000000001 /* ScreenshotLocationResolver.swift */,
 			);
 			path = Utilities;
@@ -151,6 +156,7 @@
 		A100001E0000000000000002 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				A10000320000000000000001 /* MultiFileDragButton.swift */,
 				A100001E0000000000000001 /* ScreenshotCardView.swift */,
 				A10000200000000000000001 /* SectionHeaderView.swift */,
 			);
@@ -244,11 +250,13 @@
 				A10000190000000000000001 /* ThumbnailService.swift in Sources */,
 				A100001B0000000000000001 /* ScreenshotStore.swift in Sources */,
 				A100001D0000000000000001 /* SettingsViewModel.swift in Sources */,
+				A10000330000000000000001 /* MultiFileDragButton.swift in Sources */,
 				A100001F0000000000000001 /* ScreenshotCardView.swift in Sources */,
 				A10000210000000000000001 /* SectionHeaderView.swift in Sources */,
 				A10000230000000000000001 /* SettingsView.swift in Sources */,
 				A10000250000000000000001 /* ShelfView.swift in Sources */,
 				A10000270000000000000001 /* PreviewSampleData.swift in Sources */,
+				A10000350000000000000001 /* QuickLookPreviewController.swift in Sources */,
 				A10000310000000000000001 /* ScreenshotLocationResolver.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

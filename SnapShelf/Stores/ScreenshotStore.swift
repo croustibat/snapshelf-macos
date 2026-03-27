@@ -133,6 +133,14 @@ final class ScreenshotStore: ObservableObject {
         service.revealInFinder(items)
     }
 
+    func quickLook(_ item: ScreenshotItem) {
+        quickLook([item], current: item)
+    }
+
+    func quickLook(_ items: [ScreenshotItem], current: ScreenshotItem? = nil) {
+        QuickLookPreviewController.shared.preview(items.map(\.url), currentURL: current?.url)
+    }
+
     func copyImage(_ item: ScreenshotItem) {
         guard let image = NSImage(contentsOf: item.url) else {
             lastErrorMessage = "Could not copy \(item.filename)."

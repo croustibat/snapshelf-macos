@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ShelfView: View {
@@ -5,6 +6,8 @@ struct ShelfView: View {
     @State private var renameTarget: ScreenshotItem?
     @State private var selectionMode = false
     @State private var selectedIDs = Set<URL>()
+    @State private var activeItemID: URL?
+    @State private var keyMonitor: Any?
 
     private let columns = [
         GridItem(.flexible(), spacing: 14),
@@ -29,6 +32,11 @@ struct ShelfView: View {
                     renameTarget = nil
                 }
             )
+        }
+        .onAppear(perform: installKeyboardMonitor)
+        .onDisappear(perform: removeKeyboardMonitor)
+        .onChange(of: visibleItems.map(\.id), initial: true) { _, _ in
+            syncActiveItem()
         }
     }
 
@@ -121,11 +129,14 @@ struct ShelfView: View {
                                     ScreenshotCardView(
                                         item: item,
                                         isSelected: selectedIDs.contains(item.id),
+                                        isActive: activeItemID == item.id,
                                         selectionMode: selectionMode,
+                                        onActivate: { activeItemID = item.id },
                                         onSelect: { toggleSelection(for: item) },
                                         onCopyImage: { store.copyImage(item) },
                                         onCopyPath: { store.copyPaths([item]) },
                                         onDelete: { store.delete(item) },
+                                        onQuickLook: { store.quickLook(item) },
                                         onMove: { store.move(item) },
                                         onRename: {
                                             renameTarget = item
@@ -146,46 +157,248 @@ struct ShelfView: View {
         store.screenshots.filter { selectedIDs.contains($0.id) }
     }
 
+    private var visibleItems: [ScreenshotItem] {
+        store.filteredScreenshots
+    }
+
     private var selectionBar: some View {
-        HStack(spacing: 10) {
-            Text("\(selectedItems.count) selected")
+        HStack(spacing: 12) {
+            Label(selectionSummaryText, systemImage: "checkmark.circle.fill")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            Spacer()
+            Spacer(minLength: 0)
 
-            Button("Copy Files") {
-                store.copyFiles(selectedItems)
-            }
+            HStack(spacing: 6) {
+                MultiFileDragButton(items: selectedItems, compact: true)
+                    .frame(width: 30, height: 30)
 
-            Button("Copy Paths") {
-                store.copyPaths(selectedItems)
-            }
+                Button {
+                    store.quickLook(selectedItems, current: selectedItems.first)
+                } label: {
+                    Image(systemName: "space")
+                }
+                .help("Quick Look")
+                .keyboardShortcut(.space, modifiers: [])
 
-            Button("Reveal") {
-                store.revealInFinder(selectedItems)
-            }
+                Button {
+                    store.copyFiles(selectedItems)
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                }
+                .help("Copy Files")
+                .keyboardShortcut("c")
 
-            Button("Delete", role: .destructive) {
-                let items = selectedItems
-                selectedIDs.removeAll()
-                selectionMode = false
-                store.delete(items)
-            }
+                Menu {
+                    Button("Copy Paths", systemImage: "link") {
+                        store.copyPaths(selectedItems)
+                    }
 
-            Button("Clear") {
-                selectedIDs.removeAll()
+                    Button("Reveal in Finder", systemImage: "finder") {
+                        store.revealInFinder(selectedItems)
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+                .help("More Actions")
+
+                Button(role: .destructive) {
+                    let items = selectedItems
+                    selectedIDs.removeAll()
+                    selectionMode = false
+                    store.delete(items)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .help("Delete Selection")
+                .keyboardShortcut(.delete, modifiers: [])
+
+                Button {
+                    selectedIDs.removeAll()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .help("Clear Selection")
             }
+            .buttonStyle(.bordered)
         }
         .font(.caption)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var selectionSummaryText: String {
+        selectedItems.count == 1 ? "1 selected" : "\(selectedItems.count) selected"
     }
 
     private func toggleSelection(for item: ScreenshotItem) {
+        activeItemID = item.id
+
         if selectedIDs.contains(item.id) {
             selectedIDs.remove(item.id)
         } else {
             selectedIDs.insert(item.id)
         }
+    }
+
+    private func installKeyboardMonitor() {
+        guard keyMonitor == nil else {
+            return
+        }
+
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            handleKeyEvent(event)
+        }
+        syncActiveItem()
+    }
+
+    private func removeKeyboardMonitor() {
+        guard let keyMonitor else {
+            return
+        }
+
+        NSEvent.removeMonitor(keyMonitor)
+        self.keyMonitor = nil
+    }
+
+    private func handleKeyEvent(_ event: NSEvent) -> NSEvent? {
+        guard shouldHandleKeyEvent else {
+            return event
+        }
+
+        let commandPressed = event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command)
+
+        if commandPressed, event.charactersIgnoringModifiers?.lowercased() == "c" {
+            copyFocusedItems()
+            return nil
+        }
+
+        switch event.keyCode {
+        case 123:
+            moveActiveItem(horizontalStep: -1)
+            return nil
+        case 124:
+            moveActiveItem(horizontalStep: 1)
+            return nil
+        case 125:
+            moveActiveItem(verticalStep: columns.count)
+            return nil
+        case 126:
+            moveActiveItem(verticalStep: -columns.count)
+            return nil
+        case 49:
+            quickLookFocusedItem()
+            return nil
+        case 36, 76:
+            revealFocusedItem()
+            return nil
+        case 51, 117:
+            deleteFocusedItems()
+            return nil
+        default:
+            return event
+        }
+    }
+
+    private var shouldHandleKeyEvent: Bool {
+        guard visibleItems.isEmpty == false else {
+            return false
+        }
+
+        if renameTarget != nil {
+            return false
+        }
+
+        if let firstResponder = NSApp.keyWindow?.firstResponder, firstResponder is NSTextView {
+            return false
+        }
+
+        return true
+    }
+
+    private func syncActiveItem() {
+        guard visibleItems.isEmpty == false else {
+            activeItemID = nil
+            return
+        }
+
+        if let activeItemID, visibleItems.contains(where: { $0.id == activeItemID }) {
+            return
+        }
+
+        activeItemID = visibleItems.first?.id
+    }
+
+    private func moveActiveItem(horizontalStep: Int = 0, verticalStep: Int = 0) {
+        guard visibleItems.isEmpty == false else {
+            return
+        }
+
+        let currentIndex = visibleItems.firstIndex { $0.id == activeItemID } ?? 0
+        let rawTarget = currentIndex + horizontalStep + verticalStep
+        let clampedIndex = min(max(rawTarget, 0), visibleItems.count - 1)
+        activeItemID = visibleItems[clampedIndex].id
+    }
+
+    private var focusedItem: ScreenshotItem? {
+        visibleItems.first { $0.id == activeItemID } ?? visibleItems.first
+    }
+
+    private func copyFocusedItems() {
+        if selectionMode, selectedItems.isEmpty == false {
+            store.copyFiles(selectedItems)
+            return
+        }
+
+        guard let focusedItem else {
+            return
+        }
+
+        store.copyFiles([focusedItem])
+    }
+
+    private func quickLookFocusedItem() {
+        if selectionMode, selectedItems.isEmpty == false {
+            store.quickLook(selectedItems, current: focusedItem ?? selectedItems.first)
+            return
+        }
+
+        guard let focusedItem else {
+            return
+        }
+
+        store.quickLook(focusedItem)
+    }
+
+    private func revealFocusedItem() {
+        if selectionMode, selectedItems.isEmpty == false {
+            store.revealInFinder(selectedItems)
+            return
+        }
+
+        guard let focusedItem else {
+            return
+        }
+
+        store.revealInFinder(focusedItem)
+    }
+
+    private func deleteFocusedItems() {
+        if selectionMode, selectedItems.isEmpty == false {
+            let items = selectedItems
+            selectedIDs.removeAll()
+            selectionMode = false
+            store.delete(items)
+            return
+        }
+
+        guard let focusedItem else {
+            return
+        }
+
+        activeItemID = nil
+        store.delete(focusedItem)
     }
 }
 

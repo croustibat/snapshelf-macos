@@ -4,11 +4,14 @@ import SwiftUI
 struct ScreenshotCardView: View {
     let item: ScreenshotItem
     let isSelected: Bool
+    let isActive: Bool
     let selectionMode: Bool
+    let onActivate: () -> Void
     let onSelect: () -> Void
     let onCopyImage: () -> Void
     let onCopyPath: () -> Void
     let onDelete: () -> Void
+    let onQuickLook: () -> Void
     let onMove: () -> Void
     let onRename: () -> Void
     let onReveal: () -> Void
@@ -34,6 +37,8 @@ struct ScreenshotCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(alignment: .topTrailing) {
                 Menu {
+                    Button("Quick Look", systemImage: "space", action: onQuickLook)
+                    Divider()
                     Button("Copy Image", systemImage: "doc.on.doc", action: onCopyImage)
                     Button("Copy File Path", systemImage: "link", action: onCopyPath)
                     Divider()
@@ -71,10 +76,20 @@ struct ScreenshotCardView: View {
         }
         .padding(8)
         .background(selectionBackground, in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(activeBorderColor, lineWidth: isActive ? 2 : 0)
+        }
         .contentShape(RoundedRectangle(cornerRadius: 16))
         .onTapGesture {
+            onActivate()
+
             guard selectionMode else { return }
             onSelect()
+        }
+        .onTapGesture(count: 2) {
+            onActivate()
+            onQuickLook()
         }
         .draggable(item.url) {
             dragPreview
@@ -86,6 +101,10 @@ struct ScreenshotCardView: View {
 
     private var selectionBackground: some ShapeStyle {
         isSelected ? AnyShapeStyle(Color.accentColor.opacity(0.18)) : AnyShapeStyle(.clear)
+    }
+
+    private var activeBorderColor: Color {
+        isSelected ? .accentColor : .accentColor.opacity(0.7)
     }
 
     @ViewBuilder
@@ -119,11 +138,14 @@ struct ScreenshotCardView_Previews: PreviewProvider {
         ScreenshotCardView(
             item: PreviewSampleData.items.first!,
             isSelected: false,
+            isActive: true,
             selectionMode: false,
+            onActivate: {},
             onSelect: {},
             onCopyImage: {},
             onCopyPath: {},
             onDelete: {},
+            onQuickLook: {},
             onMove: {},
             onRename: {},
             onReveal: {}
