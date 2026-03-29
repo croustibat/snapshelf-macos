@@ -21,7 +21,9 @@ enum PreviewSampleData {
             ("Screenshot 2026-03-27 at 09.14.12.png", .systemBlue, 0),
             ("Screenshot 2026-03-27 at 08.50.21.png", .systemGreen, -900),
             ("Screenshot 2026-03-26 at 18.02.08.png", .systemOrange, -86_400),
-            ("Screenshot 2026-03-20 at 14.11.03.png", .systemPink, -5 * 86_400)
+            ("Screenshot 2026-03-23 at 14.11.03.png", .systemPink, -6 * 86_400),
+            ("Screenshot 2026-03-11 at 10.21.55.png", .systemPurple, -18 * 86_400),
+            ("Screenshot 2026-02-19 at 11.07.32.png", .systemTeal, -38 * 86_400)
         ]
 
         return definitions.compactMap { name, color, offset in

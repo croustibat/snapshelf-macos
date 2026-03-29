@@ -4,6 +4,8 @@ enum ScreenshotDateFilter: String, CaseIterable, Identifiable {
     case all
     case today
     case yesterday
+    case thisWeek
+    case thisMonth
     case older
 
     var id: String { rawValue }
@@ -16,6 +18,10 @@ enum ScreenshotDateFilter: String, CaseIterable, Identifiable {
             return "Today"
         case .yesterday:
             return "Yesterday"
+        case .thisWeek:
+            return "This Week"
+        case .thisMonth:
+            return "This Month"
         case .older:
             return "Older"
         }
@@ -29,6 +35,10 @@ enum ScreenshotDateFilter: String, CaseIterable, Identifiable {
             return calendar.isDateInToday(item.createdAt)
         case .yesterday:
             return calendar.isDateInYesterday(item.createdAt)
+        case .thisWeek:
+            return ScreenshotSection.section(for: item.createdAt, calendar: calendar) == .thisWeek
+        case .thisMonth:
+            return ScreenshotSection.section(for: item.createdAt, calendar: calendar) == .thisMonth
         case .older:
             return ScreenshotSection.section(for: item.createdAt, calendar: calendar) == .older
         }

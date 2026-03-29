@@ -3,6 +3,8 @@ import Foundation
 enum ScreenshotSection: String, CaseIterable, Identifiable {
     case today
     case yesterday
+    case thisWeek
+    case thisMonth
     case older
 
     var id: String { rawValue }
@@ -13,6 +15,10 @@ enum ScreenshotSection: String, CaseIterable, Identifiable {
             return "Today"
         case .yesterday:
             return "Yesterday"
+        case .thisWeek:
+            return "This Week"
+        case .thisMonth:
+            return "This Month"
         case .older:
             return "Older"
         }
@@ -25,6 +31,14 @@ enum ScreenshotSection: String, CaseIterable, Identifiable {
 
         if calendar.isDateInYesterday(date) {
             return .yesterday
+        }
+
+        if calendar.isDate(date, equalTo: .now, toGranularity: .weekOfYear) {
+            return .thisWeek
+        }
+
+        if calendar.isDate(date, equalTo: .now, toGranularity: .month) {
+            return .thisMonth
         }
 
         return .older

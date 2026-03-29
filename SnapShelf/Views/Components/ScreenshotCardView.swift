@@ -4,10 +4,12 @@ import SwiftUI
 struct ScreenshotCardView: View {
     let item: ScreenshotItem
     let width: CGFloat
+    let isFavorite: Bool
     let isSelected: Bool
     let isActive: Bool
     let selectionMode: Bool
     let onActivate: () -> Void
+    let onToggleFavorite: () -> Void
     let onSelect: () -> Void
     let onCopyImage: () -> Void
     let onCopyPath: () -> Void
@@ -46,6 +48,8 @@ struct ScreenshotCardView: View {
                 Menu {
                     Button("Quick Look", systemImage: "space", action: onQuickLook)
                     Divider()
+                    Button(isFavorite ? "Remove Favorite" : "Favorite", systemImage: isFavorite ? "star.slash" : "star", action: onToggleFavorite)
+                    Divider()
                     Button("Copy Image", systemImage: "doc.on.doc", action: onCopyImage)
                     Button("Copy File Path", systemImage: "link", action: onCopyPath)
                     Divider()
@@ -68,6 +72,14 @@ struct ScreenshotCardView: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(isSelected ? .white : .secondary, isSelected ? Color.accentColor : .clear)
                         .padding(8)
+                } else {
+                    Button(action: onToggleFavorite) {
+                        Image(systemName: isFavorite ? "star.fill" : "star")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(isFavorite ? .yellow : .secondary, .thinMaterial)
+                            .padding(8)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -150,10 +162,12 @@ struct ScreenshotCardView_Previews: PreviewProvider {
         ScreenshotCardView(
             item: PreviewSampleData.items.first!,
             width: 220,
+            isFavorite: true,
             isSelected: false,
             isActive: true,
             selectionMode: false,
             onActivate: {},
+            onToggleFavorite: {},
             onSelect: {},
             onCopyImage: {},
             onCopyPath: {},

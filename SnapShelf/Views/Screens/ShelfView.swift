@@ -78,15 +78,53 @@ struct ShelfView: View {
                 .buttonStyle(.borderless)
             }
 
-            TextField("Search screenshots", text: $store.searchText)
-                .textFieldStyle(.roundedBorder)
-
-            Picker("Date Filter", selection: $store.selectedDateFilter) {
-                ForEach(ScreenshotDateFilter.allCases) { filter in
-                    Text(filter.title).tag(filter)
+            HStack {
+                Menu {
+                    ForEach(ScreenshotDateFilter.allCases) { filter in
+                        Button {
+                            store.selectedDateFilter = filter
+                        } label: {
+                            if store.selectedDateFilter == filter {
+                                Label(filter.title, systemImage: "checkmark")
+                            } else {
+                                Text(filter.title)
+                            }
+                        }
+                    }
+                } label: {
+                    Label(store.selectedDateFilter.title, systemImage: "calendar")
                 }
+                .menuStyle(.borderlessButton)
+
+                Button {
+                    store.showsFavoritesOnly.toggle()
+                } label: {
+                    Label("Favorites", systemImage: store.showsFavoritesOnly ? "star.fill" : "star")
+                        .foregroundStyle(store.showsFavoritesOnly ? .yellow : .secondary)
+                }
+                .buttonStyle(.borderless)
+                .help("Show Favorites Only")
+
+                Spacer()
+
+                Menu {
+                    ForEach(ScreenshotSortOrder.allCases) { order in
+                        Button {
+                            store.selectedSortOrder = order
+                        } label: {
+                            if store.selectedSortOrder == order {
+                                Label(order.title, systemImage: "checkmark")
+                            } else {
+                                Text(order.title)
+                            }
+                        }
+                    }
+                } label: {
+                    Label(store.selectedSortOrder.title, systemImage: "arrow.up.arrow.down")
+                }
+                .menuStyle(.borderlessButton)
             }
-            .pickerStyle(.segmented)
+            .font(.subheadline)
 
             if selectionMode, selectedItems.isEmpty == false {
                 selectionBar
@@ -186,6 +224,12 @@ struct ShelfView: View {
                 .keyboardShortcut("c")
 
                 Menu {
+                    Button(allSelectedItemsAreFavorites ? "Remove Favorites" : "Favorite Selection", systemImage: allSelectedItemsAreFavorites ? "star.slash" : "star") {
+                        store.setFavorite(allSelectedItemsAreFavorites == false, for: selectedItems)
+                    }
+
+                    Divider()
+
                     Button("Copy Paths", systemImage: "link") {
                         store.copyPaths(selectedItems)
                     }
@@ -267,6 +311,11 @@ struct ShelfView: View {
 
         if commandPressed, event.charactersIgnoringModifiers?.lowercased() == "c" {
             copyFocusedItems()
+            return nil
+        }
+
+        if event.charactersIgnoringModifiers?.lowercased() == "f" {
+            toggleFavoriteFocusedItems()
             return nil
         }
 
@@ -354,10 +403,12 @@ struct ShelfView: View {
                 ScreenshotCardView(
                     item: item,
                     width: cardWidth,
+                    isFavorite: store.isFavorite(item),
                     isSelected: selectedIDs.contains(item.id),
                     isActive: activeItemID == item.id,
                     selectionMode: selectionMode,
                     onActivate: { activeItemID = item.id },
+                    onToggleFavorite: { store.toggleFavorite(item) },
                     onSelect: { toggleSelection(for: item) },
                     onCopyImage: { store.copyImage(item) },
                     onCopyPath: { store.copyPaths([item]) },
@@ -375,6 +426,10 @@ struct ShelfView: View {
 
     private var focusedItem: ScreenshotItem? {
         visibleItems.first { $0.id == activeItemID } ?? visibleItems.first
+    }
+
+    private var allSelectedItemsAreFavorites: Bool {
+        selectedItems.isEmpty == false && selectedItems.allSatisfy(store.isFavorite(_:))
     }
 
     private func copyFocusedItems() {
@@ -431,6 +486,19 @@ struct ShelfView: View {
 
         activeItemID = nil
         store.delete(focusedItem)
+    }
+
+    private func toggleFavoriteFocusedItems() {
+        if selectionMode, selectedItems.isEmpty == false {
+            store.setFavorite(allSelectedItemsAreFavorites == false, for: selectedItems)
+            return
+        }
+
+        guard let focusedItem else {
+            return
+        }
+
+        store.toggleFavorite(focusedItem)
     }
 }
 

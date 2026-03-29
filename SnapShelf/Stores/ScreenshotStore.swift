@@ -6,12 +6,14 @@ import ServiceManagement
 @MainActor
 final class ScreenshotStore: ObservableObject {
     @Published private(set) var screenshots: [ScreenshotItem] = []
-    @Published var searchText = ""
     @Published var selectedDateFilter: ScreenshotDateFilter = .all
+    @Published var selectedSortOrder: ScreenshotSortOrder = .newestFirst
+    @Published var showsFavoritesOnly = false
     @Published private(set) var watchedFolderURL: URL
     @Published private(set) var isLoading = false
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var followsSystemScreenshotLocation: Bool
+    @Published private(set) var favoritePaths: Set<String>
     @Published var lastErrorMessage: String?
 
     private let service = ScreenshotService()
@@ -19,10 +21,12 @@ final class ScreenshotStore: ObservableObject {
     private let defaults = UserDefaults.standard
     private let watchedFolderBookmarkKey = "watchedFolderBookmark"
     private let followSystemLocationKey = "followSystemScreenshotLocation"
+    private let favoritePathsKey = "favoriteScreenshotPaths"
 
     init() {
         let followsSystemScreenshotLocation = defaults.bool(forKey: followSystemLocationKey)
         self.followsSystemScreenshotLocation = followsSystemScreenshotLocation
+        self.favoritePaths = Set(defaults.stringArray(forKey: favoritePathsKey) ?? [])
         self.watchedFolderURL = followsSystemScreenshotLocation
             ? ScreenshotLocationResolver.currentLocation()
             : (Self.loadPersistedFolder() ?? Self.defaultWatchedFolder())
@@ -30,12 +34,12 @@ final class ScreenshotStore: ObservableObject {
     }
 
     var filteredScreenshots: [ScreenshotItem] {
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return screenshots.filter { item in
-            let matchesSearch = trimmed.isEmpty || item.filename.localizedCaseInsensitiveContains(trimmed)
+        let filtered = screenshots.filter { item in
             let matchesDate = selectedDateFilter.matches(item)
-            return matchesSearch && matchesDate
+            let matchesFavorites = showsFavoritesOnly == false || isFavorite(item)
+            return matchesDate && matchesFavorites
         }
+        return selectedSortOrder.sort(filtered)
     }
 
     var groupedScreenshots: [(section: ScreenshotSection, items: [ScreenshotItem])] {
@@ -59,6 +63,7 @@ final class ScreenshotStore: ObservableObject {
 
         do {
             screenshots = try await service.scanFolder(at: watchedFolderURL)
+            pruneMissingFavorites()
             lastErrorMessage = nil
         } catch {
             screenshots = []
@@ -112,14 +117,28 @@ final class ScreenshotStore: ObservableObject {
             return
         }
 
-        performMutation(removing: item) { [self] in
-            try await self.service.move(item, to: folderURL)
+        Task {
+            do {
+                let destinationURL = try await service.move(item, to: folderURL)
+                updateFavoritePath(from: item.url.path, to: destinationURL.path)
+                await ThumbnailService.shared.removeCachedThumbnail(for: item.url)
+                await refresh()
+            } catch {
+                lastErrorMessage = "Could not update \(item.filename)."
+            }
         }
     }
 
     func rename(_ item: ScreenshotItem, to newName: String) {
-        performMutation(removing: item) { [self] in
-            try await self.service.rename(item, to: newName)
+        Task {
+            do {
+                let destinationURL = try await service.rename(item, to: newName)
+                updateFavoritePath(from: item.url.path, to: destinationURL.path)
+                await ThumbnailService.shared.removeCachedThumbnail(for: item.url)
+                await refresh()
+            } catch {
+                lastErrorMessage = "Could not update \(item.filename)."
+            }
         }
     }
 
@@ -177,17 +196,40 @@ final class ScreenshotStore: ObservableObject {
         lastErrorMessage = nil
     }
 
+    func isFavorite(_ item: ScreenshotItem) -> Bool {
+        favoritePaths.contains(item.url.path)
+    }
+
+    func toggleFavorite(_ item: ScreenshotItem) {
+        setFavorite(isFavorite(item) == false, for: [item])
+    }
+
+    func setFavorite(_ isFavorite: Bool, for items: [ScreenshotItem]) {
+        let paths = items.map { $0.url.path }
+
+        if isFavorite {
+            favoritePaths.formUnion(paths)
+        } else {
+            favoritePaths.subtract(paths)
+        }
+
+        persistFavoritePaths()
+        objectWillChange.send()
+    }
+
     func delete(_ items: [ScreenshotItem]) {
         Task {
             for item in items {
                 do {
                     try await service.delete(item)
+                    favoritePaths.remove(item.url.path)
                     await ThumbnailService.shared.removeCachedThumbnail(for: item.url)
                 } catch {
                     lastErrorMessage = "Could not update \(item.filename)."
                 }
             }
 
+            persistFavoritePaths()
             await refresh()
         }
     }
@@ -264,11 +306,37 @@ final class ScreenshotStore: ObservableObject {
                 updated[url] = item
             } else {
                 updated.removeValue(forKey: url)
+                favoritePaths.remove(url.path)
             }
         }
 
         screenshots = updated.values.sorted { $0.createdAt > $1.createdAt }
+        persistFavoritePaths()
         lastErrorMessage = nil
+    }
+
+    private func updateFavoritePath(from oldPath: String, to newPath: String) {
+        guard favoritePaths.contains(oldPath) else {
+            return
+        }
+
+        favoritePaths.remove(oldPath)
+        favoritePaths.insert(newPath)
+        persistFavoritePaths()
+    }
+
+    private func pruneMissingFavorites() {
+        let pruned = favoritePaths.filter { FileManager.default.fileExists(atPath: $0) }
+        guard pruned != favoritePaths else {
+            return
+        }
+
+        favoritePaths = pruned
+        persistFavoritePaths()
+    }
+
+    private func persistFavoritePaths() {
+        defaults.set(Array(favoritePaths).sorted(), forKey: favoritePathsKey)
     }
 
     private func persistWatchedFolder(_ url: URL) {

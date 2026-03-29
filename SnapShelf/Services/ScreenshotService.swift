@@ -49,16 +49,18 @@ actor ScreenshotService {
         try fileManager.trashItem(at: item.url, resultingItemURL: &resultingItemURL)
     }
 
-    func move(_ item: ScreenshotItem, to destinationFolder: URL) throws {
+    func move(_ item: ScreenshotItem, to destinationFolder: URL) throws -> URL {
         let destinationURL = uniqueDestinationURL(for: item.url, in: destinationFolder)
         try fileManager.moveItem(at: item.url, to: destinationURL)
+        return destinationURL
     }
 
-    func rename(_ item: ScreenshotItem, to newName: String) throws {
+    func rename(_ item: ScreenshotItem, to newName: String) throws -> URL {
         let sanitized = sanitizedFilename(newName, originalExtension: item.fileExtension)
         let destinationURL = item.url.deletingLastPathComponent().appendingPathComponent(sanitized)
         let finalURL = uniqueDestinationURL(for: destinationURL, in: destinationURL.deletingLastPathComponent())
         try fileManager.moveItem(at: item.url, to: finalURL)
+        return finalURL
     }
 
     nonisolated func revealInFinder(_ item: ScreenshotItem) {
