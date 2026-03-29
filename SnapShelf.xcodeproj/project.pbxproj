@@ -10,6 +10,7 @@
 		A100000D0000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000C0000000000000001 /* AppDelegate.swift */; };
 		A100000F0000000000000001 /* SnapShelfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000E0000000000000001 /* SnapShelfApp.swift */; };
 		A10000110000000000000001 /* ScreenshotItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000100000000000000001 /* ScreenshotItem.swift */; };
+		A10000370000000000000001 /* ScreenshotDateFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000360000000000000001 /* ScreenshotDateFilter.swift */; };
 		A10000130000000000000001 /* ScreenshotSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000120000000000000001 /* ScreenshotSection.swift */; };
 		A10000150000000000000001 /* ScreenshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000140000000000000001 /* ScreenshotService.swift */; };
 		A10000170000000000000001 /* ScreenshotWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000160000000000000001 /* ScreenshotWatcher.swift */; };
@@ -31,6 +32,7 @@
 		A100000C0000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A100000E0000000000000001 /* SnapShelfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapShelfApp.swift; sourceTree = "<group>"; };
 		A10000100000000000000001 /* ScreenshotItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotItem.swift; sourceTree = "<group>"; };
+		A10000360000000000000001 /* ScreenshotDateFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotDateFilter.swift; sourceTree = "<group>"; };
 		A10000120000000000000001 /* ScreenshotSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotSection.swift; sourceTree = "<group>"; };
 		A10000140000000000000001 /* ScreenshotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotService.swift; sourceTree = "<group>"; };
 		A10000160000000000000001 /* ScreenshotWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotWatcher.swift; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 		A10000130000000000000002 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A10000360000000000000001 /* ScreenshotDateFilter.swift */,
 				A10000100000000000000001 /* ScreenshotItem.swift */,
 				A10000120000000000000001 /* ScreenshotSection.swift */,
 			);
@@ -243,6 +246,7 @@
 			files = (
 				A100000D0000000000000001 /* AppDelegate.swift in Sources */,
 				A100000F0000000000000001 /* SnapShelfApp.swift in Sources */,
+				A10000370000000000000001 /* ScreenshotDateFilter.swift in Sources */,
 				A10000110000000000000001 /* ScreenshotItem.swift in Sources */,
 				A10000130000000000000001 /* ScreenshotSection.swift in Sources */,
 				A10000150000000000000001 /* ScreenshotService.swift in Sources */,

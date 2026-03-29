@@ -7,6 +7,7 @@ import ServiceManagement
 final class ScreenshotStore: ObservableObject {
     @Published private(set) var screenshots: [ScreenshotItem] = []
     @Published var searchText = ""
+    @Published var selectedDateFilter: ScreenshotDateFilter = .all
     @Published private(set) var watchedFolderURL: URL
     @Published private(set) var isLoading = false
     @Published private(set) var launchAtLoginEnabled = false
@@ -30,13 +31,10 @@ final class ScreenshotStore: ObservableObject {
 
     var filteredScreenshots: [ScreenshotItem] {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard trimmed.isEmpty == false else {
-            return screenshots
-        }
-
         return screenshots.filter { item in
-            item.filename.localizedCaseInsensitiveContains(trimmed)
+            let matchesSearch = trimmed.isEmpty || item.filename.localizedCaseInsensitiveContains(trimmed)
+            let matchesDate = selectedDateFilter.matches(item)
+            return matchesSearch && matchesDate
         }
     }
 

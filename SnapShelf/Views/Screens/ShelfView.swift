@@ -81,6 +81,13 @@ struct ShelfView: View {
             TextField("Search screenshots", text: $store.searchText)
                 .textFieldStyle(.roundedBorder)
 
+            Picker("Date Filter", selection: $store.selectedDateFilter) {
+                ForEach(ScreenshotDateFilter.allCases) { filter in
+                    Text(filter.title).tag(filter)
+                }
+            }
+            .pickerStyle(.segmented)
+
             if selectionMode, selectedItems.isEmpty == false {
                 selectionBar
             }
@@ -123,32 +130,16 @@ struct ShelfView: View {
                         }
 
                         ForEach(store.groupedScreenshots, id: \.section.id) { group in
-                            VStack(alignment: .leading, spacing: 12) {
-                                SectionHeaderView(title: group.section.title, count: group.items.count)
-
-                                LazyVGrid(columns: columns, alignment: .leading, spacing: gridSpacing) {
-                                    ForEach(group.items) { item in
-                                        ScreenshotCardView(
-                                            item: item,
-                                            width: cardWidth,
-                                            isSelected: selectedIDs.contains(item.id),
-                                            isActive: activeItemID == item.id,
-                                            selectionMode: selectionMode,
-                                            onActivate: { activeItemID = item.id },
-                                            onSelect: { toggleSelection(for: item) },
-                                            onCopyImage: { store.copyImage(item) },
-                                            onCopyPath: { store.copyPaths([item]) },
-                                            onDelete: { store.delete(item) },
-                                            onQuickLook: { store.quickLook(item) },
-                                            onMove: { store.move(item) },
-                                            onRename: {
-                                                renameTarget = item
-                                            },
-                                            onReveal: { store.revealInFinder(item) }
-                                        )
-                                    }
+                            if store.selectedDateFilter == .all {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    SectionHeaderView(title: group.section.title, count: group.items.count)
+                                    screenshotGrid(items: group.items, columns: columns, cardWidth: cardWidth)
                                 }
                             }
+                        }
+
+                        if store.selectedDateFilter != .all {
+                            screenshotGrid(items: store.filteredScreenshots, columns: columns, cardWidth: cardWidth)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -354,6 +345,32 @@ struct ShelfView: View {
 
     private func gridColumns(for cardWidth: CGFloat) -> [GridItem] {
         Array(repeating: GridItem(.fixed(cardWidth), spacing: gridSpacing), count: gridColumnCount)
+    }
+
+    @ViewBuilder
+    private func screenshotGrid(items: [ScreenshotItem], columns: [GridItem], cardWidth: CGFloat) -> some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: gridSpacing) {
+            ForEach(items) { item in
+                ScreenshotCardView(
+                    item: item,
+                    width: cardWidth,
+                    isSelected: selectedIDs.contains(item.id),
+                    isActive: activeItemID == item.id,
+                    selectionMode: selectionMode,
+                    onActivate: { activeItemID = item.id },
+                    onSelect: { toggleSelection(for: item) },
+                    onCopyImage: { store.copyImage(item) },
+                    onCopyPath: { store.copyPaths([item]) },
+                    onDelete: { store.delete(item) },
+                    onQuickLook: { store.quickLook(item) },
+                    onMove: { store.move(item) },
+                    onRename: {
+                        renameTarget = item
+                    },
+                    onReveal: { store.revealInFinder(item) }
+                )
+            }
+        }
     }
 
     private var focusedItem: ScreenshotItem? {
