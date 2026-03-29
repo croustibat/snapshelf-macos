@@ -8,11 +8,9 @@ struct ShelfView: View {
     @State private var selectedIDs = Set<URL>()
     @State private var activeItemID: URL?
     @State private var keyMonitor: Any?
-
-    private let columns = [
-        GridItem(.flexible(), spacing: 14),
-        GridItem(.flexible(), spacing: 14)
-    ]
+    private let gridSpacing: CGFloat = 14
+    private let gridPadding: CGFloat = 16
+    private let gridColumnCount = 2
 
     var body: some View {
         VStack(spacing: 0) {
@@ -112,43 +110,50 @@ struct ShelfView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding()
         } else {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    if let error = store.lastErrorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                    }
+            GeometryReader { proxy in
+                let cardWidth = gridCardWidth(for: proxy.size.width)
+                let columns = gridColumns(for: cardWidth)
 
-                    ForEach(store.groupedScreenshots, id: \.section.id) { group in
-                        VStack(alignment: .leading, spacing: 12) {
-                            SectionHeaderView(title: group.section.title, count: group.items.count)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        if let error = store.lastErrorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
 
-                            LazyVGrid(columns: columns, spacing: 14) {
-                                ForEach(group.items) { item in
-                                    ScreenshotCardView(
-                                        item: item,
-                                        isSelected: selectedIDs.contains(item.id),
-                                        isActive: activeItemID == item.id,
-                                        selectionMode: selectionMode,
-                                        onActivate: { activeItemID = item.id },
-                                        onSelect: { toggleSelection(for: item) },
-                                        onCopyImage: { store.copyImage(item) },
-                                        onCopyPath: { store.copyPaths([item]) },
-                                        onDelete: { store.delete(item) },
-                                        onQuickLook: { store.quickLook(item) },
-                                        onMove: { store.move(item) },
-                                        onRename: {
-                                            renameTarget = item
-                                        },
-                                        onReveal: { store.revealInFinder(item) }
-                                    )
+                        ForEach(store.groupedScreenshots, id: \.section.id) { group in
+                            VStack(alignment: .leading, spacing: 12) {
+                                SectionHeaderView(title: group.section.title, count: group.items.count)
+
+                                LazyVGrid(columns: columns, alignment: .leading, spacing: gridSpacing) {
+                                    ForEach(group.items) { item in
+                                        ScreenshotCardView(
+                                            item: item,
+                                            width: cardWidth,
+                                            isSelected: selectedIDs.contains(item.id),
+                                            isActive: activeItemID == item.id,
+                                            selectionMode: selectionMode,
+                                            onActivate: { activeItemID = item.id },
+                                            onSelect: { toggleSelection(for: item) },
+                                            onCopyImage: { store.copyImage(item) },
+                                            onCopyPath: { store.copyPaths([item]) },
+                                            onDelete: { store.delete(item) },
+                                            onQuickLook: { store.quickLook(item) },
+                                            onMove: { store.move(item) },
+                                            onRename: {
+                                                renameTarget = item
+                                            },
+                                            onReveal: { store.revealInFinder(item) }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(gridPadding)
                 }
-                .padding(16)
             }
         }
     }
@@ -282,10 +287,10 @@ struct ShelfView: View {
             moveActiveItem(horizontalStep: 1)
             return nil
         case 125:
-            moveActiveItem(verticalStep: columns.count)
+            moveActiveItem(verticalStep: gridColumnCount)
             return nil
         case 126:
-            moveActiveItem(verticalStep: -columns.count)
+            moveActiveItem(verticalStep: -gridColumnCount)
             return nil
         case 49:
             quickLookFocusedItem()
@@ -339,6 +344,16 @@ struct ShelfView: View {
         let rawTarget = currentIndex + horizontalStep + verticalStep
         let clampedIndex = min(max(rawTarget, 0), visibleItems.count - 1)
         activeItemID = visibleItems[clampedIndex].id
+    }
+
+    private func gridCardWidth(for totalWidth: CGFloat) -> CGFloat {
+        let contentWidth = max(totalWidth - (gridPadding * 2), 0)
+        let totalSpacing = CGFloat(gridColumnCount - 1) * gridSpacing
+        return floor((contentWidth - totalSpacing) / CGFloat(gridColumnCount))
+    }
+
+    private func gridColumns(for cardWidth: CGFloat) -> [GridItem] {
+        Array(repeating: GridItem(.fixed(cardWidth), spacing: gridSpacing), count: gridColumnCount)
     }
 
     private var focusedItem: ScreenshotItem? {

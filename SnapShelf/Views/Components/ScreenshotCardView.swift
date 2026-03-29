@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ScreenshotCardView: View {
     let item: ScreenshotItem
+    let width: CGFloat
     let isSelected: Bool
     let isActive: Bool
     let selectionMode: Bool
@@ -18,6 +19,10 @@ struct ScreenshotCardView: View {
 
     @State private var thumbnail: NSImage?
 
+    private var thumbnailWidth: CGFloat {
+        max(width - 16, 0)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             ZStack {
@@ -28,11 +33,13 @@ struct ScreenshotCardView: View {
                     Image(nsImage: thumbnail)
                         .resizable()
                         .scaledToFill()
+                        .frame(width: thumbnailWidth, height: 126)
                 } else {
                     ProgressView()
                         .controlSize(.small)
                 }
             }
+            .frame(width: thumbnailWidth, height: 126)
             .frame(height: 126)
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(alignment: .topTrailing) {
@@ -68,12 +75,17 @@ struct ScreenshotCardView: View {
                 Text(item.filename)
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(width: thumbnailWidth, alignment: .leading)
 
                 Text(item.createdAt, format: .dateTime.hour().minute())
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .frame(width: thumbnailWidth, alignment: .leading)
             }
+            .frame(width: thumbnailWidth, alignment: .leading)
         }
+        .frame(width: width, alignment: .leading)
         .padding(8)
         .background(selectionBackground, in: RoundedRectangle(cornerRadius: 16))
         .overlay {
@@ -137,6 +149,7 @@ struct ScreenshotCardView_Previews: PreviewProvider {
     static var previews: some View {
         ScreenshotCardView(
             item: PreviewSampleData.items.first!,
+            width: 220,
             isSelected: false,
             isActive: true,
             selectionMode: false,
