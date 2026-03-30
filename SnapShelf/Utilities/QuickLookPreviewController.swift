@@ -1,12 +1,14 @@
 import AppKit
-import QuickLookUI
+@preconcurrency import QuickLookUI
 
 final class QuickLookPreviewController: NSObject {
+    @MainActor
     static let shared = QuickLookPreviewController()
 
     private var items: [URL] = []
     private var currentIndex = 0
 
+    @MainActor
     func preview(_ urls: [URL], currentURL: URL? = nil) {
         let existingURLs = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
         guard existingURLs.isEmpty == false else {

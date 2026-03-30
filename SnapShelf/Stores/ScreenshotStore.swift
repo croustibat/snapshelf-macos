@@ -129,6 +129,37 @@ final class ScreenshotStore: ObservableObject {
         }
     }
 
+    func move(_ items: [ScreenshotItem]) {
+        guard let referenceItem = items.first else {
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.prompt = "Move"
+        panel.directoryURL = referenceItem.url.deletingLastPathComponent()
+
+        guard panel.runModal() == .OK, let folderURL = panel.url else {
+            return
+        }
+
+        Task {
+            for item in items {
+                do {
+                    let destinationURL = try await service.move(item, to: folderURL)
+                    updateFavoritePath(from: item.url.path, to: destinationURL.path)
+                    await ThumbnailService.shared.removeCachedThumbnail(for: item.url)
+                } catch {
+                    lastErrorMessage = "Could not move \(item.filename)."
+                }
+            }
+
+            await refresh()
+        }
+    }
+
     func rename(_ item: ScreenshotItem, to newName: String) {
         Task {
             do {

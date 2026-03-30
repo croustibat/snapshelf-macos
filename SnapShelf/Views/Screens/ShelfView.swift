@@ -65,7 +65,9 @@ struct ShelfView: View {
                     .buttonStyle(.borderless)
                 }
 
-                SettingsLink {
+                Button {
+                    openSettingsWindow()
+                } label: {
                     Image(systemName: "gearshape")
                 }
                 .buttonStyle(.borderless)
@@ -223,6 +225,16 @@ struct ShelfView: View {
                 .help("Copy Files")
                 .keyboardShortcut("c")
 
+                Button {
+                    let items = selectedItems
+                    selectedIDs.removeAll()
+                    selectionMode = false
+                    store.move(items)
+                } label: {
+                    Image(systemName: "folder")
+                }
+                .help("Move Selection")
+
                 Menu {
                     Button(allSelectedItemsAreFavorites ? "Remove Favorites" : "Favorite Selection", systemImage: allSelectedItemsAreFavorites ? "star.slash" : "star") {
                         store.setFavorite(allSelectedItemsAreFavorites == false, for: selectedItems)
@@ -232,6 +244,13 @@ struct ShelfView: View {
 
                     Button("Copy Paths", systemImage: "link") {
                         store.copyPaths(selectedItems)
+                    }
+
+                    Button("Move to Folder", systemImage: "folder") {
+                        let items = selectedItems
+                        selectedIDs.removeAll()
+                        selectionMode = false
+                        store.move(items)
                     }
 
                     Button("Reveal in Finder", systemImage: "finder") {
@@ -499,6 +518,11 @@ struct ShelfView: View {
         }
 
         store.toggleFavorite(focusedItem)
+    }
+
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 }
 
